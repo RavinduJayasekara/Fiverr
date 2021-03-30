@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Button, Text, View, TouchableOpacity } from "react-native";
+import { Button, Text, View, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Camera } from "expo-camera";
-
-const ImgPicker = (props) => {
+import Video from "../Models/Video";
+import { useDispatch } from "react-redux";
+import * as videoActions from "../store/actions/video";
+const NewPlaceAdd = (props) => {
   const [cameraRef, setCameraRef] = useState();
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraPreview, setCameraPreview] = useState(false);
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [recording, setRecording] = useState(false);
+  const [pickedImage, setPickedImage] = useState();
+  const [video, setVideo] = useState();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     (async () => {
@@ -33,65 +38,54 @@ const ImgPicker = (props) => {
 
   return (
     <View style={{ flex: 1 }}>
-      <Camera
-        style={{ flex: 1 }}
-        type={type}
-        ref={(ref) => {
-          setCameraRef(ref);
-        }}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "transparent",
-            justifyContent: "flex-end",
+      {!pickedImage ? (
+        <Camera
+          style={{ flex: 1 }}
+          type={type}
+          ref={(ref) => {
+            setCameraRef(ref);
           }}
         >
           <View
             style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-evenly",
+              flex: 1,
+              backgroundColor: "transparent",
+              justifyContent: "flex-end",
             }}
           >
-            <TouchableOpacity
+            <View
               style={{
-                flex: 0.1,
-                alignSelf: "flex-end",
-              }}
-              onPress={() => {
-                setType(
-                  type === Camera.Constants.Type.back
-                    ? Camera.Constants.Type.front
-                    : Camera.Constants.Type.back
-                );
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-evenly",
               }}
             >
-              <Ionicons
-                name={Platform.OS === "ios" ? "ios-camera" : "md-camera"}
-                size={40}
-                color="white"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ alignSelf: "center" }}
-              onPress={async () => {
-                if (cameraRef) {
-                  let photo = await cameraRef.takePictureAsync();
-                  console.log("photo", photo);
-                }
-              }}
-            >
-              <View
+              <TouchableOpacity
                 style={{
-                  borderWidth: 2,
-                  borderRadius: 25,
-                  borderColor: "white",
-                  height: 50,
-                  width: 50,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  flex: 0.1,
+                  alignSelf: "flex-end",
+                }}
+                onPress={() => {
+                  setType(
+                    type === Camera.Constants.Type.back
+                      ? Camera.Constants.Type.front
+                      : Camera.Constants.Type.back
+                  );
+                }}
+              >
+                <Ionicons
+                  name={Platform.OS === "ios" ? "ios-camera" : "md-camera"}
+                  size={40}
+                  color="white"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ alignSelf: "center" }}
+                onPress={async () => {
+                  if (cameraRef) {
+                    let photo = await cameraRef.takePictureAsync();
+                    setPickedImage(photo.uri);
+                  }
                 }}
               >
                 <View
@@ -99,36 +93,37 @@ const ImgPicker = (props) => {
                     borderWidth: 2,
                     borderRadius: 25,
                     borderColor: "white",
-                    height: 40,
-                    width: 40,
-                    backgroundColor: "white",
+                    height: 50,
+                    width: 50,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
-                ></View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ alignSelf: "center" }}
-              onPress={async () => {
-                if (!recording) {
-                  setRecording(true);
-                  let video = await cameraRef.recordAsync();
-                  console.log("video", video);
-                } else {
-                  setRecording(false);
-                  cameraRef.stopRecording();
-                }
-              }}
-            >
-              <View
-                style={{
-                  borderWidth: 2,
-                  borderRadius: 25,
-                  borderColor: "red",
-                  height: 50,
-                  width: 50,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                >
+                  <View
+                    style={{
+                      borderWidth: 2,
+                      borderRadius: 25,
+                      borderColor: "white",
+                      height: 40,
+                      width: 40,
+                      backgroundColor: "white",
+                    }}
+                  ></View>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ alignSelf: "center" }}
+                onPress={async () => {
+                  if (!recording) {
+                    setRecording(true);
+                    let video = await cameraRef.recordAsync();
+                    dispatch(videoActions.addVideo(video.uri));
+                    props.navigation.navigate("VideoList");
+                  } else {
+                    setRecording(false);
+                    cameraRef.stopRecording();
+                  }
                 }}
               >
                 <View
@@ -136,18 +131,36 @@ const ImgPicker = (props) => {
                     borderWidth: 2,
                     borderRadius: 25,
                     borderColor: "red",
-                    height: 40,
-                    width: 40,
-                    backgroundColor: "red",
+                    height: 50,
+                    width: 50,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
-                ></View>
-              </View>
-            </TouchableOpacity>
+                >
+                  <View
+                    style={{
+                      borderWidth: 2,
+                      borderRadius: 25,
+                      borderColor: "red",
+                      height: 40,
+                      width: 40,
+                      backgroundColor: "red",
+                    }}
+                  ></View>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Camera>
+        </Camera>
+      ) : (
+        <Image
+          style={{ height: "100%", width: "100%" }}
+          source={{ uri: pickedImage }}
+        />
+      )}
     </View>
   );
 };
 
-export default ImgPicker;
+export default NewPlaceAdd;
